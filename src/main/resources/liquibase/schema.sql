@@ -20,5 +20,6 @@ CREATE TABLE statistics
 (
  id serial primary key not null,
  url    varchar(255)                UNIQUE not null,
- total int default 0
+ total int default 0,
+ version  bigint
 );

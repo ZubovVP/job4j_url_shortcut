@@ -1,15 +1,13 @@
 package ru.job4j.job4j_url_shortcut.services;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.job4j.job4j_url_shortcut.generator.Generator;
 import ru.job4j.job4j_url_shortcut.models.Link;
-import ru.job4j.job4j_url_shortcut.models.Statistic;
 import ru.job4j.job4j_url_shortcut.models.Url;
 import ru.job4j.job4j_url_shortcut.repositories.LinkRepository;
 import ru.job4j.job4j_url_shortcut.repositories.SiteRepository;
-import ru.job4j.job4j_url_shortcut.repositories.StatisticRepository;
 
 /**
  * Created by Intellij IDEA.
@@ -22,27 +20,25 @@ import ru.job4j.job4j_url_shortcut.repositories.StatisticRepository;
 @Service
 public class ConvertService {
     private LinkRepository repository;
-    private Generator generator;
     private SiteRepository siteRepository;
-    private StatisticRepository statisticRepository;
+    private StatisticService statisticService;
+
 
     @Autowired
-    public ConvertService(Generator generator, LinkRepository linkRepository, SiteRepository siteRepository, StatisticRepository statisticRepository) {
-        this.generator = generator;
+    public ConvertService(LinkRepository linkRepository, SiteRepository siteRepository, StatisticService statisticService) {
         this.repository = linkRepository;
         this.siteRepository = siteRepository;
-        this.statisticRepository = statisticRepository;
+        this.statisticService = statisticService;
     }
 
     public Link convert(Link site, String login) {
         Link result = this.findByFullUrl(site);
         if (result == null) {
-            site.setShortUrl(this.generator.generate(6));
+            site.setShortUrl(RandomStringUtils.randomAlphabetic(6));
             try {
                 site.setSite(siteRepository.findByLogin(login));
                 result = this.repository.save(site);
-                Thread thread = new Thread(() -> createStat(site.getFullUrl()));
-                thread.start();
+                this.statisticService.createStat(site.getFullUrl());
                 log.info("Successfully create and save short Url for site - {}", site.getFullUrl());
             } catch (Exception e) {
                 log.error("Wrong create and save short Url for site - {}", site.getFullUrl());
@@ -55,9 +51,8 @@ public class ConvertService {
         Link resultLink = findByShortUrl(site);
         Url result = new Url();
         if (resultLink != null) {
-            Thread thread = new Thread(() -> updateStatistic(resultLink.getFullUrl()));
-            thread.start();
             result.setUrl(resultLink.getFullUrl());
+            this.statisticService.updateStatistic(result.getUrl());
         }
         return result;
     }
@@ -74,21 +69,4 @@ public class ConvertService {
         return result;
     }
 
-    private void updateStatistic(String url) {
-        Statistic statistic = this.statisticRepository.findByUrl(url);
-        if (statistic != null) {
-            statistic.setTotal(statistic.getTotal() + 1);
-            this.statisticRepository.save(statistic);
-            log.info("Successfully update statistic for url - {} , total - {}", url, statistic.getTotal());
-        } else {
-            log.error("Don't found statistic with url - {}", url);
-        }
-    }
-
-    private void createStat(String url) {
-        Statistic statistic = new Statistic();
-        statistic.setUrl(url);
-        this.statisticRepository.save(statistic);
-        log.info("Successfully create statistic for url - {}", url);
-    }
 }
