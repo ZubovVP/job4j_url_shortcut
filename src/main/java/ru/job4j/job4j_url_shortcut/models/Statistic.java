@@ -14,7 +14,6 @@ import javax.persistence.*;
 @Table(name = "statistics")
 @Entity
 public class Statistic{
-    private static final long serialVersionUID = -7593775012501239455L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
@@ -24,8 +23,4 @@ public class Statistic{
 
     @Column(name = "total")
     private int total;
-
-    @Version
-    @Column(name = "version")
-    private long version;
 }

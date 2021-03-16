@@ -11,7 +11,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 
@@ -39,17 +38,10 @@ public class StatisticService {
     public void updateStatistic(String url) {
         checkPool();
         this.queue.add(() -> {
-            Statistic statistic = statisticRepository.findByUrl(url);
-            if (statistic != null) {
-                AtomicInteger count = new AtomicInteger(statistic.getTotal());
-                statistic.setTotal(count.addAndGet(1));
-                statisticRepository.save(statistic);
-                log.info("Successfully update statistic for url - {} , total - {}", url, count.get());
-                return;
-            }
-            log.error("Don't found statistic with url - {}", url);
-        });
-    }
+                    statisticRepository.updateTotal(url);
+                    log.info("Successfully update statistic for url - {}", url);
+    });
+}
 
     public void createStat(String url) {
         checkPool();
