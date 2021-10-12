@@ -25,7 +25,6 @@ public class RegService {
     private SiteRepository repository;
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    @Autowired
     public RegService(Generator generator, SiteRepository repository, BCryptPasswordEncoder bCryptPasswordEncoder) {
         this.generator = generator;
         this.repository = repository;
